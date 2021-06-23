@@ -11,7 +11,7 @@ HEAD="$(which head)";
 TAIL="$(which tail)";
 TELEGRAM_SEND="$(which telegram_send.sh)";
 LOG_FILE="/var/log/hh.log";
-HH_CODE="$(cat /var/log/hh.code)"; # Код генерирует другой скрипт
+HH_CODE="$(cat /var/log/hh.code)"; # код генерируется другим скриптом
 URL="https://api.hh.ru/resumes";
 
 $CURL -s -H "Authorization: Bearer $HH_CODE" "$URL/mine" |
@@ -28,7 +28,7 @@ $CURL -s -H "Authorization: Bearer $HH_CODE" "$URL/mine" |
         UPDATED_AT_TIMESTAMP="$($DATE -d "$UPDATED_AT" +"%s")";
         DIFF_TIME_UPTADED_AT="$((($NOW-$UPDATED_AT_TIMESTAMP)))";
         WAIT_TIME="$((14400-$DIFF_TIME_UPTADED_AT))";
-        # Обновит резюме если прошло больше 4 часов с последнего обновления
+        # обновит резюме если прошло больше 4 часов с последнего обновления
         if [[ "$WAIT_TIME" -le "0" ]]; then
             if [[ "$n" == "0" ]]; then
                 $DATE > "$LOG_FILE"; n="1";
@@ -44,7 +44,7 @@ $CURL -s -H "Authorization: Bearer $HH_CODE" "$URL/mine" |
             elif echo "$UPDATE" | $GREP -Pq 'HTTP/2 403'; then
                 ERROR="Требуется авторизация";
                 ERROR_LOWER="$(echo "$ERROR" | $AWK '{print tolower($0)}')";
-                # Оповещение меня с помощью Telegram-бота
+                # оповещение меня с помощью Telegram-бота
                 $TELEGRAM_SEND "hh.sh: $ERROR_LOWER" > /dev/null 2>&1;
                 echo "$ERROR" >> "$LOG_FILE";
                 break;
