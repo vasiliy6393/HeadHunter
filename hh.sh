@@ -8,6 +8,7 @@ GREP="$(which grep)";
 AWK="$(which awk)";
 DATE="$(which date)";
 HEAD="$(which head)";
+TAIL="$(which tail)";
 TELEGRAM_SEND="$(which telegram_send.sh)";
 LOG_FILE="/var/log/hh.log";
 HH_CODE="$(cat /var/log/hh.code)"; # Код генерирует другой скрипт
@@ -48,8 +49,8 @@ $CURL -s -H "Authorization: Bearer $HH_CODE" "$URL/mine" |
                 echo "$ERROR" >> "$LOG_FILE";
                 break;
             else
-                echo "$UPDATE" | grep -P '^HTTP\/2' | $HEAD -c-2 >> "$LOG_FILE";
-                echo "- $UPDATE" | tail -n1 | $AWK -F\" '{print $4}' >> "$LOG_FILE";
+                echo "$UPDATE" | $GREP -P '^HTTP\/2' | $HEAD -c-2 >> "$LOG_FILE";
+                echo "- $UPDATE" | $TAIL -n1 | $AWK -F\" '{print $4}' >> "$LOG_FILE";
             fi
         fi
     done
