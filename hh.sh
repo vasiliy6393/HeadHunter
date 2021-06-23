@@ -31,8 +31,6 @@ $CURL -s -H "Authorization: Bearer $HH_CODE" "$URL/mine" |
         if [[ "$WAIT_TIME" -le "0" ]]; then
             if [[ "$n" == "0" ]]; then
                 $DATE > "$LOG_FILE"; n="1";
-            else
-                $DATE >> "$LOG_FILE";
             fi
             id="$(echo "$line" | $AWK -F, '{print $1}')";
             title="$(echo "$line" | $AWK -F, '{print $2}')";
