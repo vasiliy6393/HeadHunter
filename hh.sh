@@ -15,8 +15,7 @@ HH_CODE="$(cat /var/log/hh.code)"; # код генерируется други�
 URL="https://api.hh.ru/resumes";
 
 $CURL -s -H "Authorization: Bearer $HH_CODE" "$URL/mine" |
-    $JQ ".items[] | {id, title}, .access.type.name" | 
-    $SED ':a;N;$!ba;s/}\n"/} "/g' |
+    $JQ ".items[] | {id, title}, .access.type.name" | $SED ':a;N;$!ba;s/}\n"/} "/g' |
     $GREP -Piv 'доступно только по прямой ссылке|не видно никому' |
     $AWK -F\" '{print $4","$8}' | while read line; do
         id="$(echo "$line" | $AWK -F, '{print $1}')";
@@ -38,7 +37,7 @@ $CURL -s -H "Authorization: Bearer $HH_CODE" "$URL/mine" |
             id="$(echo "$line" | $AWK -F, '{print $1}')";
             title="$(echo "$line" | $AWK -F, '{print $2}')";
             UPDATE="$($CURL --request POST -si -H "Authorization: Bearer $HH_CODE" \
-                                                  "$URL/$id/publish")";
+                                                                                     "$URL/$id/publish")";
             if echo "$UPDATE" | $GREP -Pq 'HTTP/2 20[0-9]'; then
                 echo "Резюме $title успешно обновлено" >> "$LOG_FILE";
             elif echo "$UPDATE" | $GREP -Pq 'HTTP/2 403'; then
