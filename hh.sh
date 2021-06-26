@@ -13,14 +13,21 @@ export KILL="$(which kill)";
 export KILLALL="$(which killall)";
 export TELEGRAM_SEND="$(which telegram_send.sh)";
 export URL="https://api.hh.ru/resumes";
-export CODE="$(cat /tmp/hh.code)"; # код генерируется другим скриптом
+export CODE="$(cat /var/log/hh.code)"; # код генерируется другим скриптом
 export LOG="/var/log/hh.log";
+
+PID_FILE='/tmp/hh.pid';
+if [[ -e "$PID_FILE" ]]; then
+    LAST_PID="$($CAT "$PID_FILE")";
+    [[ "$LAST_PID" =~ ^[0-9]+$ ]] && $KILL -9 $LAST_PID;
+fi
+echo "$$" > "$PID_FILE";
 
 function _update(){
     id="$1";
     title="$2";
     RES_UPDATE="$($CURL --request POST -si -H "Authorization: Bearer $CODE" \
-                                                                                      "$URL/$id/publish")";
+                                          "$URL/$id/publish")";
     if echo "$RES_UPDATE" | $GREP -Pq 'HTTP/2 20[0-9]'; then
         echo "Резюме \"$title\" успешно обновлено" >> "$LOG";
     elif echo "$RES_UPDATE" | $GREP -Pq 'HTTP/2 403'; then
@@ -43,6 +50,7 @@ $CURL -s -H "Authorization: Bearer $CODE" "$URL/mine" |
     $AWK -F\" '{print $4","$8}' | while read line; do
         id="$(echo "$line" | $AWK -F, '{print $1}')";
         title="$(echo "$line" | $AWK -F, '{print $2}')";
-        if [[ "$n" == "0" ]]; then $DATE > "$LOG"; n="1"; fi
+        if [[ "$n" == "0" ]]; then $DATE >> "$LOG"; n="1"; fi
         _update "$id" "$title";
     done
+    echo >> "$LOG"
