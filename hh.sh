@@ -16,13 +16,6 @@ export URL="https://api.hh.ru/resumes";
 export CODE="$(cat /var/log/hh.code)"; # код генерируется другим скриптом
 export LOG="/var/log/hh.log";
 
-PID_FILE='/tmp/hh.pid';
-if [[ -e "$PID_FILE" ]]; then
-    LAST_PID="$($CAT "$PID_FILE")";
-    [[ "$LAST_PID" =~ ^[0-9]+$ ]] && $KILL -9 $LAST_PID;
-fi
-echo "$$" > "$PID_FILE";
-
 function _update(){
     id="$1";
     title="$2";
