@@ -16,6 +16,13 @@ export URL="https://api.hh.ru/resumes";
 export CODE="$(cat /var/log/hh.code)"; # код генерируется другим скриптом
 export LOG="/var/log/hh.log";
 
+PID_FILE='/tmp/hh.pid';
+if [[ -e "$PID_FILE" ]]; then
+    LAST_PID="$($CAT "$PID_FILE")";
+    [[ "$LAST_PID" =~ ^[0-9]+$ ]] && $KILL -9 $LAST_PID;
+fi
+echo "$$" > "$PID_FILE";
+
 function _update(){
     id="$1";
     title="$2";
@@ -35,15 +42,37 @@ function _update(){
     fi
 }
 
-n="0";
-$CURL -s -H "Authorization: Bearer $CODE" "$URL/mine" |
-    $JQ ".items[] | {id, title}, .access.type.name" | 
-    $SED ':a;N;$!ba;s/}\n"/} "/g' |
-    $GREP -Piv 'доступно только по прямой ссылке|не видно никому' |
-    $AWK -F\" '{print $4","$8}' | while read line; do
-        id="$(echo "$line" | $AWK -F, '{print $1}')";
-        title="$(echo "$line" | $AWK -F, '{print $2}')";
-        if [[ "$n" == "0" ]]; then $DATE >> "$LOG"; n="1"; fi
-        _update "$id" "$title";
-    done
-    echo >> "$LOG"
+h="$(date +%k)"; m="$(date +%M | $SED 's/^0//')"; s="$(date +%S | $SED 's/^0//')";
+if [[ "$h" -lt "4" ]]; then SLEEP="$((14400-($h*3600+$m*60+$s)))";
+elif [[ "$h" -lt "8" ]]; then SLEEP="$((28800-($h*3600+$m*60+$s)))";
+elif [[ "$h" -lt "12" ]]; then SLEEP="$((43200-($h*3600+$m*60+$s)))";
+elif [[ "$h" -lt "16" ]]; then SLEEP="$((57600-($h*3600+$m*60+$s)))";
+elif [[ "$h" -lt "20" ]]; then SLEEP="$((72000-($h*3600+$m*60+$s)))";
+elif [[ "$h" -gt "20" ]]; then SLEEP="$((14400+86400-($h*3600+$m*60+$s)))";
+fi
+st="$($GREP -P '\d+:\d+:\d+' $LOG | $TAIL -n1 |
+          $SED 's/.*[0-9]\+:[0-9]\+:\([0-9]\+\).*/\1/' | $SED 's/^0//')";
+SLEEP="$(($SLEEP+$st))";
+sleep $SLEEP
+while true; do
+    n="0";
+    $CURL -s -H "Authorization: Bearer $CODE" "$URL/mine" |
+        $JQ ".items[] | {id, title}, .access.type.name" |
+        $SED ':a;N;$!ba;s/}\n"/} "/g' |
+        $GREP -Piv 'доступно только по прямой ссылке|не видно никому' |
+        $AWK -F\" '{print $4","$8}' | while read line; do
+            id="$(echo "$line" | $AWK -F, '{print $1}')";
+            title="$(echo "$line" | $AWK -F, '{print $2}')";
+            if [[ "$n" == "0" ]]; then $DATE >> "$LOG"; n="1"; fi
+            _update "$id" "$title";
+        done
+        echo >> "$LOG";
+    h="$(date +%k)"; m="$(date +%M)"; s="$(date +%S)";
+    st="$($GREP -P '\d+:\d+:\d+' $LOG | $TAIL -n1 |
+          $SED 's/.*[0-9]\+:[0-9]\+:\([0-9]\+\).*/\1/' | $SED 's/^0//')";
+    if [[ "$h" -gt "20" ]]; then
+        sleep $((14400+86400-($h*3600+$m*60+$s+$st)));
+    else
+        sleep 4h;
+    fi
+done
