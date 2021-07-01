@@ -52,7 +52,7 @@ elif [[ "$h" -lt "8" ]]; then WAIT="$((28800-($h*3600+$m*60+$s)+$st))";
 elif [[ "$h" -lt "12" ]]; then WAIT="$((43200-($h*3600+$m*60+$s)+$st))";
 elif [[ "$h" -lt "16" ]]; then WAIT="$((57600-($h*3600+$m*60+$s)+$st))";
 elif [[ "$h" -lt "20" ]]; then WAIT="$((72000-($h*3600+$m*60+$s)+$st))";
-elif [[ "$h" -eq "20" ]]; then WAIT="$((28800+86400-($h*3600+$m*60+$s)))";
+elif [[ "$h" -eq "20" ]]; then WAIT="$((14400+86400-($h*3600+$m*60+$s)))";
 fi
 $SLEEP $WAIT
 while true; do
