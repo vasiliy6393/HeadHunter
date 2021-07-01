@@ -11,6 +11,7 @@ export DATE="$(which date)";
 export CURL="$(which curl)";
 export KILL="$(which kill)";
 export KILLALL="$(which killall)";
+export SLEEP="$(which sleep)";
 export TELEGRAM_SEND="$(which telegram_send.sh)";
 export URL="https://api.hh.ru/resumes";
 export CODE="$(cat /var/log/hh.code)"; # код генерируется другим скриптом
@@ -42,22 +43,22 @@ function _update(){
     fi
 }
 
-h="$(date +%k)"; m="$(date +%M | $SED 's/^0//')"; s="$(date +%S | $SED 's/^0//')";
-if [[ "$h" -lt "4" ]]; then SLEEP="$((14400-($h*3600+$m*60+$s)))";
-elif [[ "$h" -lt "8" ]]; then SLEEP="$((28800-($h*3600+$m*60+$s)))";
-elif [[ "$h" -lt "12" ]]; then SLEEP="$((43200-($h*3600+$m*60+$s)))";
-elif [[ "$h" -lt "16" ]]; then SLEEP="$((57600-($h*3600+$m*60+$s)))";
-elif [[ "$h" -lt "20" ]]; then SLEEP="$((72000-($h*3600+$m*60+$s)))";
-elif [[ "$h" -gt "20" ]]; then SLEEP="$((14400+86400-($h*3600+$m*60+$s)))";
-fi
+h="$(date +%k)"; m="$(date +%M | $SED 's/^0//')";
+s="$(date +%S | $SED 's/^0//')";
 st="$($GREP -P '\d+:\d+:\d+' $LOG | $TAIL -n1 |
-          $SED 's/.*[0-9]\+:[0-9]\+:\([0-9]\+\).*/\1/' | $SED 's/^0//')";
-SLEEP="$(($SLEEP+$st))";
-sleep $SLEEP
+      $SED 's/.*[0-9]\+:[0-9]\+:\([0-9]\+\).*/\1/' | $SED 's/^0//')";
+if [[ "$h" -lt "4" ]]; then WAIT="$((14400-($h*3600+$m*60+$s)+$st))";
+elif [[ "$h" -lt "8" ]]; then WAIT="$((28800-($h*3600+$m*60+$s)+$st))";
+elif [[ "$h" -lt "12" ]]; then WAIT="$((43200-($h*3600+$m*60+$s)+$st))";
+elif [[ "$h" -lt "16" ]]; then WAIT="$((57600-($h*3600+$m*60+$s)+$st))";
+elif [[ "$h" -lt "20" ]]; then WAIT="$((72000-($h*3600+$m*60+$s)+$st))";
+elif [[ "$h" -eq "20" ]]; then WAIT="$((28800+86400-($h*3600+$m*60+$s)))";
+fi
+$SLEEP $WAIT
 while true; do
     n="0";
     $CURL -s -H "Authorization: Bearer $CODE" "$URL/mine" |
-        $JQ ".items[] | {id, title}, .access.type.name" |
+        $JQ ".items[] | {id, title}, .access.type.name" | 
         $SED ':a;N;$!ba;s/}\n"/} "/g' |
         $GREP -Piv 'доступно только по прямой ссылке|не видно никому' |
         $AWK -F\" '{print $4","$8}' | while read line; do
@@ -68,11 +69,9 @@ while true; do
         done
         echo >> "$LOG";
     h="$(date +%k)"; m="$(date +%M)"; s="$(date +%S)";
-    st="$($GREP -P '\d+:\d+:\d+' $LOG | $TAIL -n1 |
-          $SED 's/.*[0-9]\+:[0-9]\+:\([0-9]\+\).*/\1/' | $SED 's/^0//')";
-    if [[ "$h" -gt "20" ]]; then
-        sleep $((14400+86400-($h*3600+$m*60+$s+$st)));
+    if [[ "$h" -eq "20" ]]; then
+        $SLEEP $((14400+86400-($h*3600+$m*60+$s)));
     else
-        sleep 4h;
+        $SLEEP 4h;
     fi
 done
