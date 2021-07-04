@@ -1,4 +1,6 @@
 #!/bin/sh
+#  AUTHOR: Vasiliy Pogoreliy, vasiliy@pogoreliy.tk 
+export PS="$(which ps)";
 export JQ="jq --compact-output"; export CAT="$(which cat)";
 export AWK="$(which awk)"; export SED="$(which sed)";
 export GREP="$(which grep)"; export TAIL="$(which tail)";
@@ -12,7 +14,13 @@ export HEADERS="Authorization: Bearer $CODE";
 PID_FILE='/tmp/hh.pid';
 if [[ -e "$PID_FILE" ]]; then
     LAST_PID="$($CAT "$PID_FILE")";
-    [[ "$LAST_PID" =~ ^[0-9]+$ ]] && $KILL -9 $LAST_PID;
+    if [[ "$LAST_PID" =~ ^[0-9]+$ ]]; then
+        # бывает остаются процессы-потомки,
+        # занимают место в списке процессов и могут выполнить нежелательные действия
+        # скорее всего это связано с тем, что циклы в bash выполняются в отдельном процессе
+        $KILL -- -$($PS -o pid=,pgid=$LAST_PID |
+                            $AWK '{print $1}' | $GREP -Pv "$$") > /dev/null 2>&1;
+    fi
 fi
 echo "$$" > "$PID_FILE";
 
