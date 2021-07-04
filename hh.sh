@@ -3,8 +3,8 @@
 export PS="$(which ps)";
 export JQ="jq --compact-output"; export CAT="$(which cat)";
 export AWK="$(which awk)"; export SED="$(which sed)";
-export GREP="$(which grep)"; export TAIL="$(which tail)";
-export HEAD="$(which head)"; export DATE="$(which date)";
+export GREP="$(which grep)"; export DATE="$(which date)";
+export HEAD="$(which head)"; export TAIL="$(which tail)";
 export CURL="$(which curl)"; export KILL="$(which kill)";
 export SLEEP="$(which sleep)"; export TELEGRAM_SEND="$(which telegram_send.sh)";
 export URL="https://api.hh.ru/resumes"; export LOG="/var/log/hh.log";
@@ -25,15 +25,18 @@ fi
 echo "$$" > "$PID_FILE";
 
 function _update(){
-    id="$1"; title="$2";
+    id="$(echo "$1" | $AWK -F, '{print $1}')";
+    title="$(echo "$1" | $AWK -F, '{print $2}')";
+    HTTP_STATUS_CODE_200="Резюме \"$title\" успешно обновлено";
+    HTTP_STATUS_CODE_403="Требуется авторизация";
     RES_UPDATE="$($CURL --request POST -si -H "$HEADERS" "$URL/$id/publish")";
     if echo "$RES_UPDATE" | $GREP -Pq 'HTTP/2 20[0-9]'; then
-        echo "Резюме \"$title\" успешно обновлено" >> "$LOG";
+        echo "$HTTP_STATUS_CODE_200" >> "$LOG";
     elif echo "$RES_UPDATE" | $GREP -Pq 'HTTP/2 403'; then
-        ERROR="Требуется авторизация";
-        ERROR="$(echo "$ERROR" | $AWK '{print tolower($0)}')";
+        ERROR="$HTTP_STATUS_CODE_403";
+        ERROR_LOWER="$(echo "$HTTP_STATUS_CODE_403" | $AWK '{print tolower($0)}')";
         # оповещение меня с помощью Telegram-бота
-        $TELEGRAM_SEND "hh.sh: $ERROR" > /dev/null 2>&1;
+        $TELEGRAM_SEND "hh.sh: $ERROR_LOWER" > /dev/null 2>&1;
         echo "$ERROR" >> "$LOG";
     else
         ERROR="$(echo "$RES_UPDATE" | $TAIL -n1 | $AWK -F\" '{print $10}')";
@@ -56,23 +59,24 @@ function resume_list(){
     EXCEPTION_RESUME="доступно только по прямой ссылке";
     EXCEPTION_RESUME="$EXCEPTION_RESUME|не видно никому";
     $CURL -s -H "$HEADERS" "$URL/mine" | $JQ "$JQ_FILTER" | 
-                  $SED ':a;N;$!ba;s/}\n"/} "/g' | $GREP -Piv "$EXCEPTION_RESUME" | $AWK -F\" '{print $4","$8}';
+                            $SED ':a;N;$!ba;s/}\n"/} "/g' | $GREP -Piv "$EXCEPTION_RESUME" |
+                            $AWK -F\" '{print $4","$8}';
 }
 
 while true; do
     n="0"; d="$(LANG='en_US' $DATE +%a)"; h="$($DATE +%k)";
-    st="$($GREP -P '\d+:\d+:\d+' $LOG | $TAIL -n1 | $SED 's/.*[0-9]\+:[0-9]\+:0\?\([0-9]\+\).*/\1/')";
+    st_regexp_sed='s/.*[0-9]\+:[0-9]\+:0\?\([0-9]\+\).*/\1/';
+    st="$($GREP -P '\d+:\d+:\d+' $LOG | $TAIL -n1 | $SED "$st_regexp_sed")";
+
     if [[ "$d" == "Sun" ]] || [[ "$d" == "Sat" ]]; then weekend;
     elif [[ "$h" -lt "4" ]]; then wait_until "today 04:00:$st";
     elif [[ "$h" -lt "8" ]]; then wait_until "today 08:00:$st";
     elif [[ "$h" -lt "12" ]]; then wait_until "today 12:00:$st";
     elif [[ "$h" -lt "16" ]]; then wait_until "today 16:00:$st";
     elif [[ "$h" -lt "20" ]]; then wait_until "today 20:00:$st";
-    elif [[ "$h" -eq "20" ]]; then wait_until "tomorrow 08:00";
+    elif [[ "$h" -eq "20" ]]; then wait_until "tomorrow 08:00:00";
     fi
     resume_list | while read line; do
-        id="$(echo "$line" | $AWK -F, '{print $1}')";
-        title="$(echo "$line" | $AWK -F, '{print $2}')";
         if [[ "$n" == "0" ]]; then $DATE >> "$LOG"; n="1"; fi
         _update "$id" "$title";
     done
