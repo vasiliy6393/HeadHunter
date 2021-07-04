@@ -64,7 +64,7 @@ while true; do
     st="$($GREP -P '\d+:\d+:\d+' $LOG | $TAIL -n1 | $SED 's/.*[0-9]\+:[0-9]\+:0\?\([0-9]\+\).*/\1/')";
     if [[ "$d" == "Sun" ]] || [[ "$d" == "Sat" ]]; then weekend;
     elif [[ "$h" -lt "4" ]]; then wait_until "today 04:00:$st";
-    elif [[ "$h" -lt "8" ]]; then wait_until "today 08:00:$ts";
+    elif [[ "$h" -lt "8" ]]; then wait_until "today 08:00:$st";
     elif [[ "$h" -lt "12" ]]; then wait_until "today 12:00:$st";
     elif [[ "$h" -lt "16" ]]; then wait_until "today 16:00:$st";
     elif [[ "$h" -lt "20" ]]; then wait_until "today 20:00:$st";
