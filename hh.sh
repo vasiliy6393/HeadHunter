@@ -4,8 +4,7 @@ export AWK="$(which awk)"; export SED="$(which sed)";
 export GREP="$(which grep)"; export TAIL="$(which tail)";
 export HEAD="$(which head)"; export DATE="$(which date)";
 export CURL="$(which curl)"; export KILL="$(which kill)";
-export KILLALL="$(which killall)"; export SLEEP="$(which sleep)";
-export TELEGRAM_SEND="$(which telegram_send.sh)";
+export SLEEP="$(which sleep)"; export TELEGRAM_SEND="$(which telegram_send.sh)";
 export URL="https://api.hh.ru/resumes"; export LOG="/var/log/hh.log";
 export CODE="$(cat /var/log/hh.code)"; # код генерируется другим скриптом
 export HEADERS="Authorization: Bearer $CODE";
