@@ -49,8 +49,7 @@ function resume_list(){
     EXCEPTION_RESUME="доступно только по прямой ссылке";
     EXCEPTION_RESUME="$EXCEPTION_RESUME|не видно никому";
     $CURL -s -H "$HEADERS" "$URL/mine" | $JQ "$JQ_FILTER" | 
-                 $SED ':a;N;$!ba;s/}\n"/} "/g' | $GREP -Piv "$EXCEPTION_RESUME" |
-                 $AWK -F\" '{print $4","$8}'
+                  $SED ':a;N;$!ba;s/}\n"/} "/g' | $GREP -Piv "$EXCEPTION_RESUME" | $AWK -F\" '{print $4","$8}';
 }
 
 while true; do
