@@ -66,20 +66,20 @@ function resume_list(){
 
 while true; do
     n="0"; d="$(LANG='en_US' $DATE +%a)"; h="$($DATE +%k)";
-    st_regexp_sed='s/.*[0-9]\+:[0-9]\+:0\?\([0-9]\+\).*/\1/';
-    st="$($GREP -P '\d+:\d+:\d+' $LOG | $TAIL -n1 | $SED "$st_regexp_sed")";
-
     if [[ "$d" == "Sun" ]] || [[ "$d" == "Sat" ]]; then weekend;
-    elif [[ "$h" -lt "4" ]]; then wait_until "today 04:00:$st";
-    elif [[ "$h" -lt "8" ]]; then wait_until "today 08:00:$st";
-    elif [[ "$h" -lt "12" ]]; then wait_until "today 12:00:$st";
-    elif [[ "$h" -lt "16" ]]; then wait_until "today 16:00:$st";
-    elif [[ "$h" -lt "20" ]]; then wait_until "today 20:00:$st";
+    elif [[ "$h" -lt "4" ]]; then wait_until "today 04:00:00";
+    elif [[ "$h" -lt "8" ]]; then wait_until "today 08:00:00";
+    elif [[ "$h" -lt "12" ]]; then wait_until "today 12:00:00";
+    elif [[ "$h" -lt "16" ]]; then wait_until "today 16:00:00";
+    elif [[ "$h" -lt "20" ]]; then wait_until "today 20:00:00";
     elif [[ "$h" -eq "20" ]]; then wait_until "tomorrow 08:00:00";
     fi
     resume_list | while read line; do
         if [[ "$n" == "0" ]]; then $DATE >> "$LOG"; n="1"; fi
-        _update "$id" "$title";
+        st_regexp_sed='s/.*[0-9]\+:[0-9]\+:0\?\([0-9]\+\).*/\1/';
+        st="$($GREP -P '\d+:\d+:\d+' $LOG | $TAIL -n1 | $SED "$st_regexp_sed")";
+        $SLEEP $st;
+        _update "$list";
     done
     echo >> "$LOG";
 done
