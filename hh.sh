@@ -79,7 +79,7 @@ while true; do
         st_regexp_sed='s/.*[0-9]\+:[0-9]\+:0\?\([0-9]\+\).*/\1/';
         st="$($GREP -P '\d+:\d+:\d+' $LOG | $TAIL -n1 | $SED "$st_regexp_sed")";
         $SLEEP $st;
-        _update "$list";
+        _update "$line";
     done
     echo >> "$LOG";
 done
