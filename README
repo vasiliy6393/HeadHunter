@@ -6,4 +6,4 @@
 
 # INSTALL
 sudo chmod a+x ./hh.sh;
-sudo cp ./hh.sh /bin; # or /usr/bin or /usr/local/bin
+sudo cp ./hh.sh /bin; # or /usr/bin or other
